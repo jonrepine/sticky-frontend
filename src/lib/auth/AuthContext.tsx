@@ -14,6 +14,10 @@ import {
   clearTokens,
 } from "./tokens";
 import { ME_QUERY } from "../../features/auth/graphql";
+import {
+  resetSessionExpiryState,
+  subscribeToSessionExpiry,
+} from "./sessionExpiry";
 
 interface AuthState {
   user: User | null;
@@ -31,6 +35,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const apolloClient = useApolloClient();
 
+  const clearSession = useCallback(() => {
+    clearTokens();
+    setUser(null);
+    setLoading(false);
+    void apolloClient.clearStore();
+  }, [apolloClient]);
+
   useEffect(() => {
     const token = getAccessToken();
     if (!token) {
@@ -44,17 +55,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (data?.me) {
           setUser(data.me);
         } else {
-          clearTokens();
+          clearSession();
         }
       })
       .catch(() => {
-        clearTokens();
+        clearSession();
       })
       .finally(() => setLoading(false));
-  }, [apolloClient]);
+  }, [apolloClient, clearSession]);
+
+  useEffect(() => {
+    return subscribeToSessionExpiry(() => {
+      clearSession();
+    });
+  }, [clearSession]);
 
   const login = useCallback(
     (accessToken: string, refreshToken: string, user: User) => {
+      resetSessionExpiryState();
       setTokens(accessToken, refreshToken);
       setUser(user);
     },
@@ -62,10 +80,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const logout = useCallback(() => {
-    clearTokens();
-    setUser(null);
-    apolloClient.clearStore();
-  }, [apolloClient]);
+    resetSessionExpiryState();
+    clearSession();
+  }, [clearSession]);
 
   const updateUser = useCallback((updated: User) => {
     setUser(updated);

@@ -1,11 +1,13 @@
-import { lazy, Suspense } from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { lazy, Suspense, useEffect } from "react";
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { ApolloProvider } from "@apollo/client";
 import { Center, Loader } from "@mantine/core";
+import { notifications } from "@mantine/notifications";
 import { client } from "./lib/graphql/client";
 import { AuthProvider, useAuth } from "./lib/auth/AuthContext";
 import { AppShell } from "./components/AppShell";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { subscribeToSessionExpiry } from "./lib/auth/sessionExpiry";
 
 const LoginPage = lazy(() =>
   import("./features/auth/LoginPage").then((module) => ({ default: module.LoginPage }))
@@ -64,11 +66,31 @@ function AuthRedirect({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function SessionExpiryNavigator() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    return subscribeToSessionExpiry(() => {
+      notifications.show({
+        id: "session-expired",
+        color: "grape",
+        title: "Session expired",
+        message: "Please sign in again.",
+        autoClose: 5000,
+      });
+      navigate("/login", { replace: true });
+    });
+  }, [navigate]);
+
+  return null;
+}
+
 export function App() {
   return (
     <ApolloProvider client={client}>
       <AuthProvider>
         <BrowserRouter>
+          <SessionExpiryNavigator />
           <Routes>
             <Route
               path="/login"

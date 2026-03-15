@@ -1,4 +1,4 @@
-import { useQuery } from "@apollo/client";
+import { useQuery, type ApolloError } from "@apollo/client";
 import { DUE_INFOBITS, DUE_QUEUE } from "./graphql";
 import type { DueInfoBit, DueQueueKind } from "../../types";
 
@@ -10,11 +10,22 @@ interface DueInfoBitsQueryData {
   dueInfoBits: DueInfoBit[];
 }
 
-export function useDueInfoBits(kind: DueQueueKind = "ALL", limit = 50) {
+export interface DueInfoBitsState {
+  dueInfoBits: DueInfoBit[];
+  loading: boolean;
+  error: ApolloError | undefined;
+  refetch: () => Promise<void>;
+  stateAwareQueueUnavailable: boolean;
+}
+
+export function useDueInfoBits(kind: DueQueueKind = "ALL", limit = 50): DueInfoBitsState {
   const queueQuery = useQuery<DueQueueQueryData>(DUE_QUEUE, {
     variables: { kind, limit },
-    fetchPolicy: "network-only",
+    fetchPolicy: "cache-and-network",
+    nextFetchPolicy: "cache-first",
     errorPolicy: "all",
+    notifyOnNetworkStatusChange: false,
+    returnPartialData: true,
   });
 
   const shouldUseLegacyFallback =
@@ -22,9 +33,12 @@ export function useDueInfoBits(kind: DueQueueKind = "ALL", limit = 50) {
 
   const legacyQuery = useQuery<DueInfoBitsQueryData>(DUE_INFOBITS, {
     variables: { limit },
-    fetchPolicy: "network-only",
+    fetchPolicy: "cache-and-network",
+    nextFetchPolicy: "cache-first",
     errorPolicy: "all",
     skip: !shouldUseLegacyFallback,
+    notifyOnNetworkStatusChange: false,
+    returnPartialData: true,
   });
 
   const dueInfoBits = queueQuery.data?.dueQueue ?? legacyQuery.data?.dueInfoBits ?? [];

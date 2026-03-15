@@ -6,6 +6,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Navigate, useNavigate, useOutletContext, useParams } from "react-router-dom";
 import { NewPage } from "../new/NewPage";
 import { StudySession } from "../review/StudySession";
+import type { DueInfoBitsState } from "../review/useDueInfoBits";
 import {
   FEATURE_MAX_WIDTH,
   getWorkspaceActiveWidthToken,
@@ -434,7 +435,14 @@ export function WorkspacePage() {
   const touchStartX = useRef<number | null>(null);
   const previousIndexRef = useRef(1);
   const hasRunIdleDriftRef = useRef(false);
-  const { dueCount } = useOutletContext<{ dueCount: number }>();
+  const { dueCount, dueQueues } = useOutletContext<{
+    dueCount: number;
+    dueQueues: {
+      ALL: DueInfoBitsState;
+      LEARN: DueInfoBitsState;
+      REVIEW: DueInfoBitsState;
+    };
+  }>();
   const [slideDirection, setSlideDirection] = useState(0);
   const [dragDeltaX, setDragDeltaX] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
@@ -511,7 +519,12 @@ export function WorkspacePage() {
     if (path === "/new") {
       return <NewPage dueCount={dueCount} isActive={isActive} />;
     }
-    return <StudySession mode={path === "/learn" ? "learn" : "review"} />;
+    return (
+      <StudySession
+        mode={path === "/learn" ? "learn" : "review"}
+        dueState={path === "/learn" ? dueQueues.LEARN : dueQueues.REVIEW}
+      />
+    );
   };
 
   const renderSurface = (routeSection: WorkspaceNavItem, isActive: boolean) => (

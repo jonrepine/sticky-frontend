@@ -17,7 +17,7 @@ import {
 import { useMediaQuery } from "@mantine/hooks";
 import { IconAlertCircle, IconCheck, IconFlag } from "@tabler/icons-react";
 import { useNavigate } from "react-router-dom";
-import { useDueInfoBits } from "./useDueInfoBits";
+import { useDueInfoBits, type DueInfoBitsState } from "./useDueInfoBits";
 import { useReviewSession } from "./useReviewSession";
 import { useFlags } from "../flags/useFlags";
 import { BlockContent } from "../../components/BlockContent";
@@ -113,16 +113,27 @@ function formatOutcomePreviewLabel(outcome: ReviewOutcome | undefined): string |
 
 interface StudySessionProps {
   mode: "learn" | "review";
+  dueState?: DueInfoBitsState;
 }
 
-export function StudySession({ mode }: StudySessionProps) {
+interface StudySessionContentProps {
+  mode: "learn" | "review";
+  dueState: DueInfoBitsState;
+}
+
+function StudySessionWithQuery({ mode }: { mode: "learn" | "review" }) {
+  const queriedDueState = useDueInfoBits(mode === "learn" ? "LEARN" : "REVIEW");
+  return <StudySessionContent mode={mode} dueState={queriedDueState} />;
+}
+
+function StudySessionContent({ mode, dueState }: StudySessionContentProps) {
   const navigate = useNavigate();
   const {
     dueInfoBits,
     loading: dueLoading,
     error,
     stateAwareQueueUnavailable,
-  } = useDueInfoBits(mode === "learn" ? "LEARN" : "REVIEW");
+  } = dueState;
   const session = useReviewSession();
   const { createFlag } = useFlags();
   const { colorScheme } = useMantineColorScheme();
@@ -147,7 +158,7 @@ export function StudySession({ mode }: StudySessionProps) {
     }
   }, [dueInfoBits, started, session]);
 
-  if (dueLoading) {
+  if (dueLoading && dueInfoBits.length === 0) {
     return (
       <Center py="xl">
         <Loader />
@@ -342,4 +353,12 @@ export function StudySession({ mode }: StudySessionProps) {
       </Stack>
     </Stack>
   );
+}
+
+export function StudySession({ mode, dueState }: StudySessionProps) {
+  if (dueState) {
+    return <StudySessionContent mode={mode} dueState={dueState} />;
+  }
+
+  return <StudySessionWithQuery mode={mode} />;
 }

@@ -26,6 +26,11 @@ interface SessionState {
   lastResult: ReviewResult | null;
 }
 
+interface LoadedPromptResult {
+  prompt: ReviewPrompt | null;
+  outcomePreviews: ReviewOutcome[];
+}
+
 export function useReviewSession() {
   const [state, setState] = useState<SessionState>({
     queue: [],
@@ -71,6 +76,49 @@ export function useReviewSession() {
     [fetchOutcomePreview]
   );
 
+  const loadPrompt = useCallback(
+    async (infoBitId: string): Promise<LoadedPromptResult> => {
+      const { data } = await fetchCard({
+        variables: { id: infoBitId },
+      });
+      const prompt = data?.nextReviewCard ?? null;
+      if (!prompt) {
+        return {
+          prompt: null,
+          outcomePreviews: [],
+        };
+      }
+
+      return {
+        prompt,
+        outcomePreviews: await loadOutcomePreviews({
+          infoBitId: prompt.infoBitId,
+          cardId: prompt.card.cardId,
+        }),
+      };
+    },
+    [fetchCard, loadOutcomePreviews]
+  );
+
+  const hydrateOutcomePreviews = useCallback(
+    async (prompt: ReviewPrompt) => {
+      const outcomePreviews = await loadOutcomePreviews({
+        infoBitId: prompt.infoBitId,
+        cardId: prompt.card.cardId,
+      });
+      setState((current) => {
+        if (
+          current.prompt?.infoBitId !== prompt.infoBitId ||
+          current.prompt.card.cardId !== prompt.card.cardId
+        ) {
+          return current;
+        }
+        return { ...current, outcomePreviews };
+      });
+    },
+    [loadOutcomePreviews]
+  );
+
   const startSession = useCallback(
     async (dueItems: DueInfoBit[]) => {
       if (dueItems.length === 0) {
@@ -86,19 +134,13 @@ export function useReviewSession() {
         completed: false,
         lastResult: null,
       });
-      const { data } = await fetchCard({
-        variables: { id: dueItems[0]!.infoBitId },
-      });
-      if (data?.nextReviewCard) {
-        const outcomePreviews = await loadOutcomePreviews({
-          infoBitId: data.nextReviewCard.infoBitId,
-          cardId: data.nextReviewCard.card.cardId,
-        });
-        setState((s) => ({ ...s, prompt: data.nextReviewCard, outcomePreviews }));
+      const { prompt, outcomePreviews } = await loadPrompt(dueItems[0]!.infoBitId);
+      if (prompt) {
+        setState((s) => ({ ...s, prompt, outcomePreviews }));
         responseStart.current = Date.now();
       }
     },
-    [fetchCard, loadOutcomePreviews]
+    [loadPrompt]
   );
 
   const reveal = useCallback(() => {
@@ -110,6 +152,13 @@ export function useReviewSession() {
       if (!state.prompt) return;
 
       const responseMs = Date.now() - responseStart.current;
+      const nextIndex = state.currentIndex + 1;
+      const nextItem = nextIndex < state.queue.length ? state.queue[nextIndex] : null;
+      const nextPromptPromise = nextItem
+        ? fetchCard({
+            variables: { id: nextItem.infoBitId },
+          })
+        : null;
 
       const { data } = await submitMut({
         variables: {
@@ -126,10 +175,9 @@ export function useReviewSession() {
           { query: DUE_QUEUE, variables: { kind: "ALL", limit: 50 } },
           { query: DUE_INFOBITS, variables: { limit: 50 } },
         ],
-        awaitRefetchQueries: true,
+        awaitRefetchQueries: false,
       });
 
-      const nextIndex = state.currentIndex + 1;
       if (nextIndex >= state.queue.length) {
         setState((s) => ({
           ...s,
@@ -142,30 +190,23 @@ export function useReviewSession() {
         return;
       }
 
-      const nextItem = state.queue[nextIndex]!;
-      const { data: cardData } = await fetchCard({
-        variables: { id: nextItem.infoBitId },
-      });
-
-      let outcomePreviews: ReviewOutcome[] = [];
-      if (cardData?.nextReviewCard) {
-        outcomePreviews = await loadOutcomePreviews({
-          infoBitId: cardData.nextReviewCard.infoBitId,
-          cardId: cardData.nextReviewCard.card.cardId,
-        });
-      }
+      const nextPromptResult = nextPromptPromise ? await nextPromptPromise : null;
+      const nextPrompt = nextPromptResult?.data?.nextReviewCard ?? null;
 
       setState((s) => ({
         ...s,
         currentIndex: nextIndex,
-        prompt: cardData?.nextReviewCard ?? null,
-        outcomePreviews,
+        prompt: nextPrompt,
+        outcomePreviews: [],
         revealed: false,
         lastResult: data?.submitReview ?? null,
       }));
-      responseStart.current = Date.now();
+      if (nextPrompt) {
+        responseStart.current = Date.now();
+        void hydrateOutcomePreviews(nextPrompt);
+      }
     },
-    [state.prompt, state.currentIndex, state.queue, fetchCard, submitMut, loadOutcomePreviews]
+    [state.prompt, state.currentIndex, state.queue, fetchCard, submitMut, hydrateOutcomePreviews]
   );
 
   return {

@@ -10,10 +10,12 @@ import {
   Paper,
   Popover,
   Stack,
+  Switch,
   TagsInput,
   Text,
   TextInput,
   Textarea,
+  Tooltip,
   useMantineColorScheme,
 } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
@@ -21,8 +23,10 @@ import { notifications } from "@mantine/notifications";
 import {
   IconAlertCircle,
   IconBolt,
+  IconChevronDown,
   IconCircleCheck,
   IconDots,
+  IconHelpCircle,
   IconPlus,
   IconWand,
   IconX,
@@ -181,7 +185,72 @@ export function NewPage({ dueCount = 0, isActive = true }: NewPageProps = {}) {
   const isDark = colorScheme === "dark";
   const primaryActionStyle = getPrimaryActionStyle(isDark);
   const aiActionStyle = getAiActionStyle(isDark);
+  const fieldRadius = isCompact ? 18 : 20;
+  const editorRadius = isCompact ? 16 : 18;
+  const compactControlRadius = isCompact ? 16 : 18;
+  const roomyInputStyle = {
+    ...getInputSurfaceStyle(isDark),
+    borderRadius: fieldRadius,
+    minHeight: isCompact ? 52 : 56,
+    paddingLeft: isCompact ? 16 : 18,
+    paddingRight: isCompact ? 16 : 18,
+    fontSize: isCompact ? "0.98rem" : "1rem",
+    lineHeight: 1.45,
+  };
+  const roomyAiInputStyle = {
+    ...getAiInputStyle(isDark),
+    borderRadius: editorRadius,
+    minHeight: isCompact ? 52 : 56,
+    paddingLeft: isCompact ? 16 : 18,
+    paddingRight: isCompact ? 16 : 18,
+    fontSize: isCompact ? "0.98rem" : "1rem",
+    lineHeight: 1.45,
+  };
+  const roomyTextareaStyle = {
+    ...getInputSurfaceStyle(isDark),
+    borderRadius: editorRadius,
+    padding: isCompact ? "14px 16px" : "16px 18px",
+    lineHeight: 1.55,
+  };
+  const roomyAiTextareaStyle = {
+    ...getAiInputStyle(isDark),
+    borderRadius: editorRadius,
+    padding: isCompact ? "14px 16px" : "16px 18px",
+    lineHeight: 1.55,
+  };
+  const compactInputStyle = {
+    ...getInputSurfaceStyle(isDark),
+    borderRadius: compactControlRadius,
+    minHeight: isCompact ? 42 : 44,
+    paddingLeft: 14,
+    paddingRight: 14,
+    fontSize: "0.92rem",
+    lineHeight: 1.35,
+  };
+  const submitBottomClearance = isCompact
+    ? `calc(${getDockClearance(isCompact)} + 6.25rem)`
+    : "2rem";
   const { points: dailyEngagement, loading: streakLoading, error: streakError } = useDailyEngagement(90);
+  const renderHelpButton = (label: string, hint: string) => (
+    <Tooltip
+      label={hint}
+      withArrow
+      multiline
+      maw={220}
+      position="top-start"
+      openDelay={120}
+    >
+      <ActionIcon
+        aria-label={`${label} help`}
+        variant="subtle"
+        color="gray"
+        radius="xl"
+        size="sm"
+      >
+        <IconHelpCircle size={14} />
+      </ActionIcon>
+    </Tooltip>
+  );
   const categoryTrigger = (
     <Button
       aria-expanded={categoryMenuOpen}
@@ -191,15 +260,43 @@ export function NewPage({ dueCount = 0, isActive = true }: NewPageProps = {}) {
           : "Choose a category"
       }
       variant="light"
-      size="xs"
+      justify="space-between"
+      size={isCompact ? "md" : "sm"}
+      radius={fieldRadius}
       color={selectedCategoryColor}
-      radius="xl"
       disabled={categoriesLoading || categoryChoices.length === 0}
       onClick={(e) => {
         e.preventDefault();
         setCategoryMenuOpen((v) => !v);
       }}
       fullWidth={isCompact}
+      rightSection={
+        <IconChevronDown
+          size={16}
+          style={{
+            opacity: 0.72,
+            transform: categoryMenuOpen ? "rotate(180deg)" : undefined,
+            transition: "transform 160ms ease",
+          }}
+        />
+      }
+      styles={{
+        root: {
+          minHeight: isCompact ? 48 : 42,
+          boxShadow: "none",
+          paddingInline: isCompact ? 14 : 12,
+        },
+        inner: {
+          justifyContent: "space-between",
+          width: "100%",
+        },
+        label: {
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+          fontWeight: 600,
+        },
+      }}
     >
       {selectedCategoryChoice?.label ?? "Category"}
     </Button>
@@ -586,7 +683,7 @@ export function NewPage({ dueCount = 0, isActive = true }: NewPageProps = {}) {
         minHeight: `calc(100dvh - ${isCompact ? 210 : 250}px)`,
         justifyContent: isCompact ? (hasExpandedPanels ? "flex-start" : "flex-end") : "center",
         paddingTop: isCompact ? 0 : "clamp(0.5rem, 1.8vh, 1.4rem)",
-        paddingBottom: canSubmit ? "max(1rem, env(safe-area-inset-bottom, 0px))" : 0,
+        paddingBottom: canSubmit ? submitBottomClearance : 0,
       }}
     >
       <Stack gap={isCompact ? "md" : "lg"} h="100%">
@@ -647,12 +744,12 @@ export function NewPage({ dueCount = 0, isActive = true }: NewPageProps = {}) {
               value={inputText}
               onChange={(e) => setInputText(e.currentTarget.value)}
               placeholder="word, fact, concept..."
-              size="md"
-              radius="xl"
+              size={isCompact ? "md" : "lg"}
+              radius={fieldRadius}
               styles={{
-                input: getInputSurfaceStyle(isDark),
+                input: roomyInputStyle,
               }}
-              rightSectionWidth={isCompact ? undefined : 170}
+              rightSectionWidth={isCompact ? undefined : 212}
               rightSectionPointerEvents={isCompact ? undefined : "all"}
               rightSection={
                 isCompact ? undefined : (
@@ -671,7 +768,7 @@ export function NewPage({ dueCount = 0, isActive = true }: NewPageProps = {}) {
                           <Button
                             key={category.key}
                             size="xs"
-                            radius="xl"
+                            radius="lg"
                             color={CATEGORY_COLORS[category.slug] || "indigo"}
                             variant={categoryKey === category.key ? "outline" : "light"}
                             onClick={() => {
@@ -705,7 +802,7 @@ export function NewPage({ dueCount = 0, isActive = true }: NewPageProps = {}) {
                       <Button
                         key={category.key}
                         justify="space-between"
-                        radius="xl"
+                        radius="lg"
                         color={CATEGORY_COLORS[category.slug] || "indigo"}
                         variant={categoryKey === category.key ? "outline" : "light"}
                         onClick={() => {
@@ -730,50 +827,86 @@ export function NewPage({ dueCount = 0, isActive = true }: NewPageProps = {}) {
 
             {isCompact ? (
               <Stack gap="sm">
-                <TagsInput
-                  aria-label="Tags"
-                  placeholder="tags..."
-                  value={tags}
-                  onChange={setTags}
-                  radius="xl"
-                  size="sm"
-                  w="100%"
-                  styles={{
-                    input: getInputSurfaceStyle(isDark),
-                  }}
-                />
-                <Checkbox
-                  checked={socraticEnabled}
-                  onChange={(e) => setSocraticEnabled(e.currentTarget.checked)}
-                  label="socratic"
-                  aria-label="Use Socratic follow-up questions before generating cards"
-                  color="green"
-                  radius="xl"
-                  style={{ width: "100%" }}
-                />
+                <Stack gap={6}>
+                  <Group gap={4} align="center">
+                    <Text size="xs" fw={600} c="dimmed">
+                      tags
+                    </Text>
+                    {renderHelpButton("Tags", "Optional. Use tags to organize related captures.")}
+                  </Group>
+                  <TagsInput
+                    aria-label="Tags"
+                    placeholder="tags..."
+                    value={tags}
+                    onChange={setTags}
+                    radius={compactControlRadius}
+                    size="sm"
+                    w="100%"
+                    styles={{
+                      input: compactInputStyle,
+                    }}
+                  />
+                </Stack>
+                <Stack gap={6}>
+                  <Group gap={4} align="center">
+                    <Text size="xs" fw={600} c="dimmed">
+                      socratic
+                    </Text>
+                    {renderHelpButton(
+                      "Socratic",
+                      "Optional. When on, Sticky asks for missing detail instead of guessing."
+                    )}
+                  </Group>
+                  <Switch
+                    checked={socraticEnabled}
+                    onChange={(e) => setSocraticEnabled(e.currentTarget.checked)}
+                    aria-label="Use Socratic follow-up questions before generating cards"
+                    color="grape"
+                    size="md"
+                    style={{ width: "100%" }}
+                  />
+                </Stack>
               </Stack>
             ) : (
-              <Group align="center" justify="space-between" wrap="nowrap" gap="md">
-                <TagsInput
-                  aria-label="Tags"
-                  placeholder="tags..."
-                  value={tags}
-                  onChange={setTags}
-                  style={{ flex: 1, minWidth: 0 }}
-                  radius="xl"
-                  size="sm"
-                  styles={{
-                    input: getInputSurfaceStyle(isDark),
-                  }}
-                />
-                <Checkbox
-                  checked={socraticEnabled}
-                  onChange={(e) => setSocraticEnabled(e.currentTarget.checked)}
-                  label="socratic"
-                  aria-label="Use Socratic follow-up questions before generating cards"
-                  color="green"
-                  radius="xl"
-                />
+              <Group align="flex-start" justify="space-between" wrap="nowrap" gap="md">
+                <Stack gap={6} style={{ flex: 1, minWidth: 0 }}>
+                  <Group gap={4} align="center">
+                    <Text size="xs" fw={600} c="dimmed">
+                      tags
+                    </Text>
+                    {renderHelpButton("Tags", "Optional. Use tags to organize related captures.")}
+                  </Group>
+                  <TagsInput
+                    aria-label="Tags"
+                    placeholder="tags..."
+                    value={tags}
+                    onChange={setTags}
+                    style={{ flex: 1, minWidth: 0 }}
+                    radius={compactControlRadius}
+                    size="sm"
+                    styles={{
+                      input: compactInputStyle,
+                    }}
+                  />
+                </Stack>
+                <Stack gap={6} style={{ minWidth: 160 }}>
+                  <Group gap={4} align="center">
+                    <Text size="xs" fw={600} c="dimmed">
+                      socratic
+                    </Text>
+                    {renderHelpButton(
+                      "Socratic",
+                      "Optional. When on, Sticky asks for missing detail instead of guessing."
+                    )}
+                  </Group>
+                  <Switch
+                    checked={socraticEnabled}
+                    onChange={(e) => setSocraticEnabled(e.currentTarget.checked)}
+                    aria-label="Use Socratic follow-up questions before generating cards"
+                    color="grape"
+                    size="md"
+                  />
+                </Stack>
               </Group>
             )}
 
@@ -839,8 +972,8 @@ export function NewPage({ dueCount = 0, isActive = true }: NewPageProps = {}) {
                 <Paper
                   key={question.id}
                   withBorder
-                  p="sm"
-                  radius="lg"
+                  p={isCompact ? "sm" : "md"}
+                  radius="md"
                   style={getSubtleSectionStyle(isDark)}
                 >
                   <Stack gap="xs">
@@ -886,8 +1019,10 @@ export function NewPage({ dueCount = 0, isActive = true }: NewPageProps = {}) {
                             placeholder="or type your answer..."
                             value={state?.typedAnswer ?? ""}
                             disabled={notImportant}
+                            radius={editorRadius}
+                            size="md"
                             styles={{
-                              input: getInputSurfaceStyle(isDark),
+                              input: roomyTextareaStyle,
                             }}
                             onChange={(e) =>
                               updateAnswer(question.id, {
@@ -915,7 +1050,7 @@ export function NewPage({ dueCount = 0, isActive = true }: NewPageProps = {}) {
                   </Stack>
                 </Paper>
               ))}
-              <Paper withBorder p="sm" radius="lg" style={getSubtleSectionStyle(isDark)}>
+              <Paper withBorder p={isCompact ? "sm" : "md"} radius="md" style={getSubtleSectionStyle(isDark)}>
                 <Stack gap="xs">
                   <Text size="sm" fw={600}>
                     more context (optional)
@@ -925,9 +1060,10 @@ export function NewPage({ dueCount = 0, isActive = true }: NewPageProps = {}) {
                     placeholder="add any context you want the AI to consider..."
                     value={moreContext}
                     onChange={(e) => setMoreContext(e.currentTarget.value)}
-                    minRows={2}
+                    radius={editorRadius}
+                    minRows={isCompact ? 4 : 5}
                     styles={{
-                      input: getAiInputStyle(isDark),
+                      input: roomyAiTextareaStyle,
                     }}
                   />
                 </Stack>
@@ -952,90 +1088,102 @@ export function NewPage({ dueCount = 0, isActive = true }: NewPageProps = {}) {
         )}
 
         {generatedCards.length > 0 && (
-          <Paper withBorder p="sm" radius="xl" style={getSubtleSectionStyle(isDark)}>
-            <Stack gap="sm">
-              <Group wrap={isCompact ? "wrap" : "nowrap"}>
-                <TextInput
-                  aria-label="Ask AI to improve these cards"
-                  value={editRequest}
-                  onChange={(e) => setEditRequest(e.currentTarget.value)}
-                  placeholder="ask AI to improve these cards..."
-                  style={{ flex: 1, minWidth: 0 }}
-                  radius="xl"
-                  styles={{
-                      input: getAiInputStyle(isDark),
+          <Stack gap="sm">
+            <Paper withBorder p={isCompact ? "sm" : "md"} radius="xl" style={getSubtleSectionStyle(isDark)}>
+              <Stack gap="sm">
+                <Text size="sm" fw={600}>
+                  let AI edit the cards
+                </Text>
+                <Group wrap={isCompact ? "wrap" : "nowrap"}>
+                  <TextInput
+                    aria-label="Ask AI to improve these cards"
+                    value={editRequest}
+                    onChange={(e) => setEditRequest(e.currentTarget.value)}
+                    placeholder="ask AI to improve these cards..."
+                    style={{ flex: 1, minWidth: 0 }}
+                    radius={editorRadius}
+                    size="md"
+                    styles={{
+                      input: roomyAiInputStyle,
                     }}
                   />
-                <Button
-                  radius="xl"
-                  variant="light"
-                  leftSection={<IconWand size={16} color={isDark ? "#b89df4" : "#7857c7"} />}
-                  onClick={handleRefine}
-                  loading={generatingCards}
-                  disabled={!editRequest.trim()}
-                  fullWidth={isCompact}
-                  style={aiActionStyle}
-                >
-                  apply
-                </Button>
-              </Group>
+                  <Button
+                    radius="xl"
+                    variant="light"
+                    leftSection={<IconWand size={16} color={isDark ? "#b89df4" : "#7857c7"} />}
+                    onClick={handleRefine}
+                    loading={generatingCards}
+                    disabled={!editRequest.trim()}
+                    fullWidth={isCompact}
+                    style={aiActionStyle}
+                  >
+                    apply
+                  </Button>
+                </Group>
+              </Stack>
+            </Paper>
 
-              {generatedCards.map((card, idx) => (
-                <Paper
-                  key={card.id}
-                  withBorder
-                  p="sm"
-                  radius="lg"
-                  style={getSubtleSectionStyle(isDark)}
-                >
-                  <Stack gap="xs">
-                    <Group justify="space-between">
-                      <Checkbox
-                        checked={card.selected}
-                        color="green"
-                        onChange={(e) =>
-                          updateCard(card.id, { selected: e.currentTarget.checked })
-                        }
-                        label={`card ${idx + 1}`}
-                      />
-                      <ActionIcon
-                        aria-label={`Remove card ${idx + 1}`}
-                        color="red"
-                        variant="subtle"
-                        onClick={() =>
-                          setGeneratedCards((prev) =>
-                            prev.filter((existing) => existing.id !== card.id)
-                          )
-                        }
-                      >
-                        <IconX size={16} />
-                      </ActionIcon>
-                    </Group>
-                    <Textarea
-                      aria-label={`Front of card ${idx + 1}`}
-                      value={card.front}
-                      onChange={(e) => updateCard(card.id, { front: e.currentTarget.value })}
-                      placeholder="front"
-                      minRows={2}
-                      styles={{
-                        input: getInputSurfaceStyle(isDark),
-                      }}
+            {generatedCards.map((card, idx) => (
+              <Paper
+                key={card.id}
+                withBorder
+                p={isCompact ? "sm" : "md"}
+                radius="md"
+                style={getSubtleSectionStyle(isDark)}
+              >
+                <Stack gap="sm">
+                  <Group justify="space-between">
+                    <Checkbox
+                      checked={card.selected}
+                      color="green"
+                      onChange={(e) =>
+                        updateCard(card.id, { selected: e.currentTarget.checked })
+                      }
+                      label={`card ${idx + 1}`}
                     />
-                    <Textarea
-                      aria-label={`Back of card ${idx + 1}`}
-                      value={card.back}
-                      onChange={(e) => updateCard(card.id, { back: e.currentTarget.value })}
-                      placeholder="back"
-                      minRows={2}
-                      styles={{
-                        input: getInputSurfaceStyle(isDark),
-                      }}
-                    />
-                  </Stack>
-                </Paper>
-              ))}
-            </Stack>
-          </Paper>
+                    <ActionIcon
+                      aria-label={`Remove card ${idx + 1}`}
+                      color="red"
+                      variant="subtle"
+                      onClick={() =>
+                        setGeneratedCards((prev) =>
+                          prev.filter((existing) => existing.id !== card.id)
+                        )
+                      }
+                    >
+                      <IconX size={16} />
+                    </ActionIcon>
+                  </Group>
+                  <Textarea
+                    aria-label={`Front of card ${idx + 1}`}
+                    value={card.front}
+                    onChange={(e) => updateCard(card.id, { front: e.currentTarget.value })}
+                    placeholder="front"
+                    radius={editorRadius}
+                    autosize
+                    minRows={isCompact ? 4 : 5}
+                    maxRows={12}
+                    styles={{
+                      input: roomyTextareaStyle,
+                    }}
+                  />
+                  <Textarea
+                    aria-label={`Back of card ${idx + 1}`}
+                    value={card.back}
+                    onChange={(e) => updateCard(card.id, { back: e.currentTarget.value })}
+                    placeholder="back"
+                    radius={editorRadius}
+                    autosize
+                    minRows={isCompact ? 4 : 5}
+                    maxRows={12}
+                    styles={{
+                      input: roomyTextareaStyle,
+                    }}
+                  />
+                </Stack>
+              </Paper>
+            ))}
+          </Stack>
         )}
 
         {canSubmit && isActive && (

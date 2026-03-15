@@ -11,9 +11,9 @@ import {
   getAccessToken,
   getRefreshToken,
   setTokens,
-  clearTokens,
 } from "../auth/tokens";
 import { REFRESH_SESSION } from "../../features/auth/graphql";
+import { triggerSessionExpiry } from "../auth/sessionExpiry";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
@@ -52,8 +52,7 @@ const errorLink = onError(({ graphQLErrors, operation, forward }) => {
 
   const refreshToken = getRefreshToken();
   if (!refreshToken) {
-    clearTokens();
-    window.location.href = "/login";
+    triggerSessionExpiry();
     return;
   }
 
@@ -91,8 +90,7 @@ const errorLink = onError(({ graphQLErrors, operation, forward }) => {
       .catch(() => {
         isRefreshing = false;
         pendingRequests = [];
-        clearTokens();
-        window.location.href = "/login";
+        triggerSessionExpiry();
       });
   });
 });

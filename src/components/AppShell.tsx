@@ -37,12 +37,15 @@ export function AppShell() {
   const navigate = useNavigate();
   const location = useLocation();
   const { signOut } = useSignOut();
-  const { dueInfoBits: allDueInfoBits } = useDueInfoBits("ALL");
-  const { dueInfoBits: learnDueInfoBits } = useDueInfoBits("LEARN");
-  const { dueInfoBits: reviewDueInfoBits } = useDueInfoBits("REVIEW");
+  const allDueState = useDueInfoBits("ALL");
+  const learnDueState = useDueInfoBits("LEARN");
+  const reviewDueState = useDueInfoBits("REVIEW");
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const isCompact = !!useMediaQuery("(max-width: 36em)");
   const isDark = colorScheme === "dark";
+  const allDueInfoBits = allDueState.dueInfoBits;
+  const learnDueInfoBits = learnDueState.dueInfoBits;
+  const reviewDueInfoBits = reviewDueState.dueInfoBits;
   const dueCount = allDueInfoBits.length;
   const learnDueCount = learnDueInfoBits.length;
   const reviewDueCount = reviewDueInfoBits.length;
@@ -116,7 +119,16 @@ export function AppShell() {
           paddingLeft: isWorkspaceRoute ? 0 : isCompact ? "8px" : "16px",
         }}
       >
-        <Outlet context={{ dueCount }} />
+        <Outlet
+          context={{
+            dueCount,
+            dueQueues: {
+              ALL: allDueState,
+              LEARN: learnDueState,
+              REVIEW: reviewDueState,
+            },
+          }}
+        />
       </MantineAppShell.Main>
       <FloatingDock
         dueCount={dueCount}
