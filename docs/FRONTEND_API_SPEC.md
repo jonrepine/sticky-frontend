@@ -102,7 +102,7 @@ Variables:
 - `email` is normalised to lowercase by the backend.
 - `password` must be >= 8 characters.
 - `timezone` is required (IANA format, e.g. `America/New_York`, `Europe/London`).
-- `username` is optional, nullable.
+- `username` is required (3-30 characters, alphanumeric + `_-`, stored lowercase, must be unique).
 
 ### 3.2 Sign In
 
@@ -120,13 +120,14 @@ Variables:
 ```json
 {
   "input": {
-    "email": "user@example.com",
+    "emailOrUsername": "user@example.com",
     "password": "MinimumEightChars",
     "deviceName": "iPhone 15 Pro"
   }
 }
 ```
 
+- `emailOrUsername` accepts either email address or username. Backend detects type automatically (email contains `@`, username does not).
 - `deviceName` is optional, stored for session identification.
 
 ### 3.3 Token Usage

@@ -198,3 +198,7 @@
 ## 2026-03-15 — Reduced mobile animations for performance
 **Decision**: Simplified framer-motion animations on mobile (WorkspacePage): disabled idle drift animation, reduced transition durations, removed scale transforms, reduced blur effects.
 **Why**: Mobile felt laggy and stuttery due to excessive animation complexity. Simpler animations improve performance while maintaining smooth feel.
+
+## 2026-03-15 — Username required at signup, login accepts email or username
+**Decision**: Make username mandatory during registration. Update `SignInInput` to use `emailOrUsername` field (backend detects type via `@` presence). Frontend label: "Email or Username".
+**Why**: Improves user flexibility and matches common auth UX patterns. Usernames provide shorter, more memorable login identifiers.

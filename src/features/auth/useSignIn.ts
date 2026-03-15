@@ -9,9 +9,9 @@ export function useSignIn() {
     SIGN_IN
   );
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = async (emailOrUsername: string, password: string) => {
     const { data } = await mutate({
-      variables: { input: { email, password } },
+      variables: { input: { emailOrUsername, password } },
     });
     if (data?.signIn) {
       login(data.signIn.accessToken, data.signIn.refreshToken, data.signIn.user);
