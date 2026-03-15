@@ -1,0 +1,12 @@
+[variables]
+NPM_CONFIG_PRODUCTION = "false"
+
+[phases.install]
+cmds = [
+  "rm -rf node_modules/.vite .vite || true",
+  "npm install --include=dev"
+]
+
+[start]
+cmd = "npm run start:railway"
+

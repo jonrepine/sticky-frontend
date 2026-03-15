@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "start": "vite --host 0.0.0.0 --port ${PORT:-4173}",
+    "start:railway": "rm -rf node_modules/.vite .vite && vite --host 0.0.0.0 --port ${PORT:-4173}"
   },
   "dependencies": {
     "@apollo/client": "^3.12.0",
