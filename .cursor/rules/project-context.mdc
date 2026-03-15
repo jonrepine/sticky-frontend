@@ -1,0 +1,24 @@
+---
+description: Always include docs folder context for the Sticky frontend project
+alwaysApply: true
+---
+
+# Sticky Frontend — Project Context
+
+This is the Sticky spaced-repetition frontend app. The following documentation files are the single source of truth for all development work and MUST be read and followed for every task:
+
+## Required Context Documents
+
+1. **`docs/FRONTEND_API_SPEC.md`** — Complete API specification, GraphQL operations, auth flow, screen map, development workflow, and build chunks. This is the primary reference for all frontend work.
+2. **`docs/FSRS_REFERENCE.md`** — FSRS algorithm reference (state machine, ratings, ts-fsrs types). Needed for understanding review scheduling.
+3. **`docs/API_ACTION_CATALOG.md`** — Maps every user action to its GraphQL operation and delivery phase (V1 vs V1.1+).
+4. **`docs/DECISION_LOG.md`** — Settled technical decisions. Never re-debate what's already decided here.
+5. **`docs/ERROR_JOURNAL.md`** — Known bugs and fixes. Check before debugging to avoid re-encountering solved issues.
+
+## Rules
+
+- Always read the relevant docs before making changes.
+- Follow the modular development lifecycle defined in the API spec (Section 18).
+- Keep the Decision Log and Error Journal updated after each session.
+- The backend GraphQL API runs at `http://localhost:4000` — never mock it during development.
+- Build in chunks, test each chunk before moving on.
