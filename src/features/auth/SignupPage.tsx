@@ -27,7 +27,7 @@ export function SignupPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    const result = await signUp(email, password, timezone, username || undefined);
+    const result = await signUp(email, password, timezone, username);
     if (result) navigate("/how-to-use-sticky?from=signup");
   };
 
@@ -65,7 +65,8 @@ export function SignupPage() {
             )}
             <TextInput
               label="Username"
-              placeholder="Display name (optional)"
+              placeholder="Display name"
+              required
               value={username}
               onChange={(e) => setUsername(e.currentTarget.value)}
             />

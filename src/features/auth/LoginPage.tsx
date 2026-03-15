@@ -20,12 +20,12 @@ import { useSignIn } from "./useSignIn";
 export function LoginPage() {
   const navigate = useNavigate();
   const { signIn, loading, error } = useSignIn();
-  const [email, setEmail] = useState("");
+  const [emailOrUsername, setEmailOrUsername] = useState("");
   const [password, setPassword] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const result = await signIn(email, password);
+    const result = await signIn(emailOrUsername, password);
     if (result) navigate("/new");
   };
 
@@ -62,11 +62,11 @@ export function LoginPage() {
               </Alert>
             )}
             <TextInput
-              label="Email"
-              placeholder="you@example.com"
+              label="Email or Username"
+              placeholder="you@example.com or username"
               required
-              value={email}
-              onChange={(e) => setEmail(e.currentTarget.value)}
+              value={emailOrUsername}
+              onChange={(e) => setEmailOrUsername(e.currentTarget.value)}
             />
             <PasswordInput
               label="Password"

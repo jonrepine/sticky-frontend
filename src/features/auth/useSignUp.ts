@@ -13,11 +13,11 @@ export function useSignUp() {
     email: string,
     password: string,
     timezone: string,
-    username?: string
+    username: string
   ) => {
     const { data } = await mutate({
       variables: {
-        input: { email, password, timezone, ...(username ? { username } : {}) },
+        input: { email, password, timezone, username },
       },
     });
     if (data?.signUp) {
