@@ -1,19 +1,18 @@
 const SHARED_CORE_CONTEXT = `Create flashcards using active recall and minimum-information principles. The goal is not recognition, trivia, or broad exposure. The goal is durable memory through multiple retrieval paths to the same atomic fact.
 
-Each note must contain one core thing to remember, plus any selected deep attributes that belong to that same fact, such as source, context, significance, contrast, or domain.
+CRITICAL RULES:
+1. Each card must test the EXACT SAME core answer in a different way. All cards in one note resolve to one target.
+2. Never split one note into separate facts across multiple cards.
+3. Never use true/false or multiple choice.
+4. Never put conversational text, chat responses, or explanations in card content. Cards are quiz material only - front is a retrieval cue, back is the answer.
+5. Deep attributes (source/context/significance/domain/contrast) are supporting metadata, not separate facts. If selected, they must appear on EVERY card with a brief front reminder and full back section.
 
-If deep attributes are selected, they must appear on every generated card, with a brief reminder on the front and the full lower section on the back.
+Each note must contain one core thing to remember, plus any selected deep attributes that belong to that same fact.
 
-Never split one note into separate facts across multiple cards.
-Never use true/false or multiple choice.
-
-Ask only for missing information through short Socratic questions.
-If the user is vague, narrow the target.
-
+If the user is vague, narrow the target through short Socratic questions.
 If the user tries to overload a card with too many independent facts, steer them toward one specific thing to remember.
-If they still want a small set of tightly related facts, keep that same set on every card as one coherent target.
-
-If they continue pushing after clarification for an unreasonable amount of facts or a topic too broad, generate a rejection card instead.`;
+If they still want a small set of tightly related facts, keep that same set on every card as one coherent target (e.g., "four heads of quadriceps" is one atomic bundle).
+If they continue pushing for an unreasonable amount of facts or a topic too broad after clarification, generate a rejection card instead.`;
 
 const CATEGORY_CONTEXT: Record<string, string> = {
   "new-word": `Category: new-word

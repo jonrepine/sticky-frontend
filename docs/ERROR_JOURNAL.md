@@ -84,3 +84,9 @@
 **Cause**: Running Vite dev server (`npm run dev`) in production enabled HMR (Hot Module Replacement) websocket, which caused reconnect loops on mobile networks.
 **Fix**: Extracted LLM routes to standalone Express API server, allowing frontend to build as static bundle served via `vite preview`.
 **Lesson**: Never run Vite dev server in production. Always build static bundles and use proper production servers.
+
+## 2026-03-15 — LLM card generation quality degraded after API server extraction
+**Symptom**: Generated flashcards contained chat responses in content, didn't follow one-target-per-note rules, and ignored deep attribute selections.
+**Cause**: When extracting LLM logic from `vite.config.ts` to `api-server/server.js`, the user prompt was simplified to only include input text, category, and tags. Critical context was omitted: `qaContext` (Socratic refinement answers), `editInstruction`, `existingCards`, `generationConfig`, and the pre-built `noteSpec` with selected deep attributes. The LLM had no guidance on what the refined target was or what the user actually meant.
+**Fix**: Restored comprehensive user prompt including all context fields and explicit NoteSpec. Added rule #4 to SHARED_CORE_CONTEXT: "Never put conversational text, chat responses, or explanations in card content." Added logic to override noteSpec with LLM's refined values if provided.
+**Lesson**: When refactoring LLM integrations, verify the complete prompt assembly includes all semantic context, not just the literal input. Prompt quality determines output quality.
