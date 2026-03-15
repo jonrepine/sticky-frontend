@@ -51,6 +51,7 @@ import { useDailyEngagement } from "../streak/useDailyEngagement";
 import { useHealthStatus } from "../system/useHealthStatus";
 import {
   FEATURE_MAX_WIDTH,
+  getGlassInsetStyle,
   getAiActionStyle,
   getAiInputStyle,
   getDockClearance,
@@ -227,6 +228,28 @@ export function NewPage({ dueCount = 0, isActive = true }: NewPageProps = {}) {
     fontSize: "0.92rem",
     lineHeight: 1.35,
   };
+  const heroSectionStyle = {
+    ...getSubtleSectionStyle(isDark),
+    position: "relative" as const,
+    overflow: "hidden" as const,
+    border: isDark ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(255,255,255,0.86)",
+    background: isDark
+      ? "linear-gradient(180deg, rgba(24, 27, 33, 0.9), rgba(17, 19, 25, 0.94))"
+      : "linear-gradient(180deg, rgba(252, 252, 248, 0.98), rgba(244, 243, 238, 0.96))",
+    boxShadow: isDark
+      ? "0 26px 68px rgba(0, 0, 0, 0.28), 0 0 0 1px rgba(147, 222, 67, 0.04)"
+      : "0 26px 58px rgba(92, 100, 123, 0.13), 0 0 0 1px rgba(255,255,255,0.7)",
+  };
+  const heroInsetStyle = {
+    ...getGlassInsetStyle(isDark),
+    borderRadius: isCompact ? 24 : 28,
+    padding: isCompact ? "0.85rem 0.9rem" : "1rem 1.05rem",
+    minHeight: isCompact ? undefined : 152,
+    display: "flex",
+    flexDirection: "column" as const,
+    justifyContent: "space-between",
+    gap: "0.75rem",
+  };
   const submitBottomClearance = isCompact
     ? `calc(${getDockClearance(isCompact)} + 6.25rem)`
     : "2rem";
@@ -250,6 +273,48 @@ export function NewPage({ dueCount = 0, isActive = true }: NewPageProps = {}) {
         <IconHelpCircle size={14} />
       </ActionIcon>
     </Tooltip>
+  );
+  const streakPanel = (
+    <div style={heroInsetStyle}>
+      <div>
+        <Text
+          size="10px"
+          fw={800}
+          tt="uppercase"
+          style={{
+            letterSpacing: "0.16em",
+            color: isDark ? "rgba(210, 218, 199, 0.62)" : "rgba(71, 77, 58, 0.64)",
+          }}
+        >
+          Daily rhythm
+        </Text>
+        <Text
+          fw={650}
+          size="sm"
+          mt={4}
+          style={{ color: isDark ? "#edf2e1" : "#22281b" }}
+        >
+          Streaks land here soon.
+        </Text>
+      </div>
+      {streakLoading ? (
+        <Text size="xs" c="dimmed">
+          Loading activity...
+        </Text>
+      ) : (
+        <StreakHeatmap
+          points={dailyEngagement}
+          isDark={isDark}
+          compact={isCompact}
+          windowDays={90}
+        />
+      )}
+      {streakError && (
+        <Text size="xs" c="dimmed">
+          Activity heatmap will appear once the daily engagement API is enabled.
+        </Text>
+      )}
+    </div>
   );
   const categoryTrigger = (
     <Button
@@ -687,136 +752,189 @@ export function NewPage({ dueCount = 0, isActive = true }: NewPageProps = {}) {
       }}
     >
       <Stack gap={isCompact ? "md" : "lg"} h="100%">
-        <Group justify="flex-start">
-          <Badge color={dueCount > 0 ? "grape" : "gray"} variant="outline" radius="xl">
-            {dueCount > 0 ? `${dueCount} due now` : "clear for now"}
-          </Badge>
-        </Group>
-
-        <Paper p="sm" radius="xl" style={getSubtleSectionStyle(isDark)}>
-          <Stack gap="sm">
-            <Text size="xs" c="dimmed" tt="uppercase" style={{ letterSpacing: 0.6 }}>
-              Daily rhythm
-            </Text>
-            <Text fw={600} size="sm">
-              Streaks land here soon.
-            </Text>
-            {streakLoading ? (
-              <Text size="xs" c="dimmed">
-                Loading activity...
-              </Text>
-            ) : (
-              <StreakHeatmap points={dailyEngagement} isDark={isDark} compact={isCompact} windowDays={90} />
-            )}
-            {streakError && (
-              <Text size="xs" c="dimmed">
-                Activity heatmap will appear once the daily engagement API is enabled.
-              </Text>
-            )}
-          </Stack>
-        </Paper>
-
-        {llmStatus && !llmStatus.live && (
-          <Group justify="flex-end">
-                <Badge color="gray" variant="light" radius="xl">
-              Fallback mode
-            </Badge>
-          </Group>
+        {isCompact && (
+          <Paper withBorder p="xs" radius={24} style={getSubtleSectionStyle(isDark)}>
+            {streakPanel}
+          </Paper>
         )}
 
-        {error && (
-          <Alert
-            icon={<IconAlertCircle size={16} />}
-            color="red"
-            variant="light"
-            radius="lg"
-            role="alert"
-          >
-            {error}
-          </Alert>
-        )}
-
-        <Paper withBorder p={isCompact ? "sm" : "md"} radius="xl" style={getSubtleSectionStyle(isDark)}>
+        <Paper withBorder p={isCompact ? "md" : "lg"} radius={isCompact ? 30 : 34} style={heroSectionStyle}>
+          <div
+            aria-hidden="true"
+            style={{
+              position: "absolute",
+              inset: 0,
+              pointerEvents: "none",
+              background: isDark
+                ? "radial-gradient(circle at top right, rgba(132, 98, 208, 0.22), transparent 24%), radial-gradient(circle at 18% 16%, rgba(147, 222, 67, 0.12), transparent 18%)"
+                : "radial-gradient(circle at top right, rgba(188, 175, 226, 0.46), transparent 26%), radial-gradient(circle at 18% 16%, rgba(151, 223, 79, 0.16), transparent 20%)",
+            }}
+          />
           <Stack gap={isCompact ? "sm" : "md"}>
-            <TextInput
-              aria-label="What did you learn?"
-              ref={inputRef}
-              value={inputText}
-              onChange={(e) => setInputText(e.currentTarget.value)}
-              placeholder="word, fact, concept..."
-              size={isCompact ? "md" : "lg"}
-              radius={fieldRadius}
-              styles={{
-                input: roomyInputStyle,
-              }}
-              rightSectionWidth={isCompact ? undefined : 212}
-              rightSectionPointerEvents={isCompact ? undefined : "all"}
-              rightSection={
-                isCompact ? undefined : (
+            <Group justify="space-between" align="center" wrap="wrap" style={{ position: "relative", zIndex: 1 }}>
+              <Group gap="xs" align="center">
+                <span
+                  aria-hidden="true"
+                  style={{
+                    width: isCompact ? 20 : 24,
+                    height: 4,
+                    borderRadius: 999,
+                    background: isDark ? "rgba(151, 226, 73, 0.84)" : "rgba(124, 200, 25, 0.9)",
+                    display: "inline-block",
+                  }}
+                />
+                <Text
+                  size="10px"
+                  fw={800}
+                  tt="uppercase"
+                  style={{
+                    letterSpacing: "0.18em",
+                    color: isDark ? "rgba(221, 235, 193, 0.82)" : "rgba(74, 116, 21, 0.9)",
+                  }}
+                >
+                  Capture
+                </Text>
+                <Badge color={dueCount > 0 ? "grape" : "gray"} variant="light" radius="xl">
+                  {dueCount > 0 ? `${dueCount} due now` : "clear for now"}
+                </Badge>
+              </Group>
+              {llmStatus && !llmStatus.live && (
+                <Badge color="gray" variant="light" radius="xl">
+                  Fallback mode
+                </Badge>
+              )}
+            </Group>
+
+            <Group
+              align="stretch"
+              justify="space-between"
+              wrap={isCompact ? "wrap" : "nowrap"}
+              gap={isCompact ? "md" : "xl"}
+              style={{ position: "relative", zIndex: 1 }}
+            >
+              <Stack gap={isCompact ? 12 : 16} style={{ flex: 1, minWidth: 0, maxWidth: isCompact ? undefined : 620 }}>
+                <Stack gap={isCompact ? 8 : 10}>
+                  <Text
+                    size={isCompact ? "xs" : "sm"}
+                    fw={700}
+                    tt="uppercase"
+                    style={{
+                      letterSpacing: "0.12em",
+                      color: isDark ? "rgba(151, 226, 73, 0.88)" : "rgba(94, 148, 22, 0.9)",
+                    }}
+                  >
+                    capture without planning
+                  </Text>
+                  <Text
+                    component="h1"
+                    fw={760}
+                    lh={0.94}
+                    m={0}
+                    style={{
+                      fontSize: isCompact ? "2.2rem" : "clamp(3rem, 4.8vw, 4.6rem)",
+                      letterSpacing: "-0.045em",
+                      maxWidth: isCompact ? undefined : "11ch",
+                      color: isDark ? "#f2f5ea" : "#191d14",
+                    }}
+                  >
+                    drop in what you just learned
+                  </Text>
+                  <Text
+                    size={isCompact ? "sm" : "md"}
+                    style={{
+                      maxWidth: isCompact ? undefined : 500,
+                      lineHeight: 1.5,
+                      color: isDark ? "rgba(228, 233, 217, 0.78)" : "rgba(54, 61, 41, 0.78)",
+                    }}
+                  >
+                    One word, one copied line, or one short fact is enough. Sticky shapes the
+                    cards, asks when context is missing, and brings it back when it matters.
+                  </Text>
+                </Stack>
+
+                <Group
+                  align="stretch"
+                  wrap={isCompact ? "wrap" : "nowrap"}
+                  gap="sm"
+                >
+                  <TextInput
+                    aria-label="What did you learn?"
+                    ref={inputRef}
+                    value={inputText}
+                    onChange={(e) => setInputText(e.currentTarget.value)}
+                    placeholder="word, fact, concept..."
+                    size={isCompact ? "md" : "lg"}
+                    radius={fieldRadius}
+                    style={{ flex: 1, minWidth: 0 }}
+                    styles={{
+                      input: {
+                        ...roomyInputStyle,
+                        minHeight: isCompact ? 58 : 74,
+                        fontSize: isCompact ? "1rem" : "1.14rem",
+                        fontWeight: 600,
+                        paddingLeft: isCompact ? 16 : 22,
+                        paddingRight: isCompact ? 16 : 22,
+                      },
+                    }}
+                  />
                   <Popover
                     opened={categoryMenuOpen}
                     onChange={setCategoryMenuOpen}
-                    position="bottom-end"
+                    position={isCompact ? "bottom-start" : "bottom-end"}
+                    width={isCompact ? "target" : undefined}
                     withArrow
                     shadow="md"
                     radius="lg"
                   >
-                    <Popover.Target>{categoryTrigger}</Popover.Target>
+                    <Popover.Target>
+                      <div style={{ width: isCompact ? "100%" : 190 }}>{categoryTrigger}</div>
+                    </Popover.Target>
                     <Popover.Dropdown p="xs">
-                      <Group gap="xs">
-                        {categoryChoices.map((category) => (
-                          <Button
-                            key={category.key}
-                            size="xs"
-                            radius="lg"
-                            color={CATEGORY_COLORS[category.slug] || "indigo"}
-                            variant={categoryKey === category.key ? "outline" : "light"}
-                            onClick={() => {
-                              setCategoryKey(category.key);
-                              setCategoryMenuOpen(false);
-                            }}
-                          >
-                            {category.label}
-                          </Button>
-                        ))}
-                      </Group>
+                      {isCompact ? (
+                        <Stack gap="xs">
+                          {categoryChoices.map((category) => (
+                            <Button
+                              key={category.key}
+                              justify="space-between"
+                              radius="lg"
+                              color={CATEGORY_COLORS[category.slug] || "indigo"}
+                              variant={categoryKey === category.key ? "outline" : "light"}
+                              onClick={() => {
+                                setCategoryKey(category.key);
+                                setCategoryMenuOpen(false);
+                              }}
+                            >
+                              {category.label}
+                            </Button>
+                          ))}
+                        </Stack>
+                      ) : (
+                        <Group gap="xs">
+                          {categoryChoices.map((category) => (
+                            <Button
+                              key={category.key}
+                              size="xs"
+                              radius="lg"
+                              color={CATEGORY_COLORS[category.slug] || "indigo"}
+                              variant={categoryKey === category.key ? "outline" : "light"}
+                              onClick={() => {
+                                setCategoryKey(category.key);
+                                setCategoryMenuOpen(false);
+                              }}
+                            >
+                              {category.label}
+                            </Button>
+                          ))}
+                        </Group>
+                      )}
                     </Popover.Dropdown>
                   </Popover>
-                )
-              }
-            />
-            {isCompact && (
-              <Popover
-                opened={categoryMenuOpen}
-                onChange={setCategoryMenuOpen}
-                position="bottom-start"
-                width="target"
-                withArrow
-                shadow="md"
-                radius="lg"
-              >
-                <Popover.Target>{categoryTrigger}</Popover.Target>
-                <Popover.Dropdown p="xs">
-                  <Stack gap="xs">
-                    {categoryChoices.map((category) => (
-                      <Button
-                        key={category.key}
-                        justify="space-between"
-                        radius="lg"
-                        color={CATEGORY_COLORS[category.slug] || "indigo"}
-                        variant={categoryKey === category.key ? "outline" : "light"}
-                        onClick={() => {
-                          setCategoryKey(category.key);
-                          setCategoryMenuOpen(false);
-                        }}
-                      >
-                        {category.label}
-                      </Button>
-                    ))}
-                  </Stack>
-                </Popover.Dropdown>
-              </Popover>
-            )}
+                </Group>
+              </Stack>
+
+              {!isCompact && <div style={{ width: 228, flexShrink: 0 }}>{streakPanel}</div>}
+            </Group>
+
             {selectedCategoryChoice?.isVirtual && (
               <Text size="xs" c="dimmed" style={wrapTextStyle}>
                 This category is frontend-first and currently saves under{" "}
@@ -869,7 +987,7 @@ export function NewPage({ dueCount = 0, isActive = true }: NewPageProps = {}) {
               </Stack>
             ) : (
               <Group align="flex-start" justify="space-between" wrap="nowrap" gap="md">
-                <Stack gap={6} style={{ flex: 1, minWidth: 0 }}>
+                <Stack gap={6} style={{ width: 220, flexShrink: 0 }}>
                   <Group gap={4} align="center">
                     <Text size="xs" fw={600} c="dimmed">
                       tags
@@ -881,7 +999,7 @@ export function NewPage({ dueCount = 0, isActive = true }: NewPageProps = {}) {
                     placeholder="tags..."
                     value={tags}
                     onChange={setTags}
-                    style={{ flex: 1, minWidth: 0 }}
+                    style={{ width: "100%" }}
                     radius={compactControlRadius}
                     size="sm"
                     styles={{
@@ -889,7 +1007,7 @@ export function NewPage({ dueCount = 0, isActive = true }: NewPageProps = {}) {
                     }}
                   />
                 </Stack>
-                <Stack gap={6} style={{ minWidth: 160 }}>
+                <Stack gap={6} style={{ minWidth: 160, marginLeft: "auto" }}>
                   <Group gap={4} align="center">
                     <Text size="xs" fw={600} c="dimmed">
                       socratic
@@ -954,6 +1072,18 @@ export function NewPage({ dueCount = 0, isActive = true }: NewPageProps = {}) {
             </Group>
           </Stack>
         </Paper>
+
+        {error && (
+          <Alert
+            icon={<IconAlertCircle size={16} />}
+            color="red"
+            variant="light"
+            radius="lg"
+            role="alert"
+          >
+            {error}
+          </Alert>
+        )}
 
         {socraticEnabled && questions.length > 0 && (
           <Paper withBorder p="sm" radius="xl" style={getSubtleSectionStyle(isDark)}>
