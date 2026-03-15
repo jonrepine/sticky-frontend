@@ -185,3 +185,16 @@
 ## 2026-03-15 — Railway Vite runtime explicitly allowlists hosted domains
 **Decision**: Configure `vite.config.ts` with `server.allowedHosts` including `.railway.app`, the current Railway hostname, and optional extra hosts via `ALLOWED_HOSTS`.
 **Why**: Running the frontend in Vite server mode on Railway requires host allowlisting; without it, requests are blocked before local LLM proxy routes can execute.
+**Note**: This decision was later superseded by extracting LLM to standalone API server.
+
+## 2026-03-15 — Standalone Node API server for LLM operations
+**Decision**: Extract all LLM proxy logic from `vite.config.ts` into a standalone Express server in `api-server/` directory. Frontend builds as static bundle and calls API server via `VITE_LLM_API_URL`.
+**Why**: Running Vite dev server in production caused HMR reconnect loops on mobile, slow startup, and instability. Standalone API server is faster, more stable, and proper production architecture.
+
+## 2026-03-15 — Pill navigation always shows labels
+**Decision**: FloatingDock component now shows labels for all sections (not just active), with visual weight difference (bold active, lighter inactive).
+**Why**: User explicitly requested all labels to be visible for better navigation clarity.
+
+## 2026-03-15 — Reduced mobile animations for performance
+**Decision**: Simplified framer-motion animations on mobile (WorkspacePage): disabled idle drift animation, reduced transition durations, removed scale transforms, reduced blur effects.
+**Why**: Mobile felt laggy and stuttery due to excessive animation complexity. Simpler animations improve performance while maintaining smooth feel.

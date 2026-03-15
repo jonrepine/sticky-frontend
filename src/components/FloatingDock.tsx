@@ -1,6 +1,5 @@
 import { Group, Indicator, Paper, Text, UnstyledButton, useMantineColorScheme } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
-import { AnimatePresence, motion } from "framer-motion";
 import { useLocation, useNavigate } from "react-router-dom";
 import { DOCK_NAV_ITEMS, isPrimaryPathActive } from "./primaryNav";
 import {
@@ -80,7 +79,7 @@ export function FloatingDock({ dueCount, learnDueCount, reviewDueCount }: Floati
                       ...getPillStyle(isDark, active),
                     }}
                   >
-                    <Group gap={active ? 6 : 0} wrap="nowrap" justify="center" align="center">
+                    <Group gap={6} wrap="nowrap" justify="center" align="center">
                       <Indicator
                         disabled={!item.showDue || itemDueCount === 0}
                         color="grape"
@@ -99,28 +98,15 @@ export function FloatingDock({ dueCount, learnDueCount, reviewDueCount }: Floati
                           <item.icon size={isCompact ? 15 : 16} style={{ display: "block" }} />
                         </span>
                       </Indicator>
-                      <AnimatePresence initial={false}>
-                        {active && (
-                          <motion.div
-                            key={`${item.path}-label`}
-                            initial={{ opacity: 0, width: 0, x: -4 }}
-                            animate={{ opacity: 1, width: "auto", x: 0 }}
-                            exit={{ opacity: 0, width: 0, x: -4 }}
-                            transition={{ duration: 0.16, ease: [0.22, 1, 0.36, 1] }}
-                            style={{ overflow: "hidden" }}
-                          >
-                            <Text
-                              size={isCompact ? "11px" : "xs"}
-                              fw={700}
-                              c={isDark ? "gray.0" : "dark.7"}
-                              ta="center"
-                              style={{ lineHeight: 1.2, whiteSpace: "nowrap" }}
-                            >
-                              {item.label}
-                            </Text>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
+                      <Text
+                        size={isCompact ? "11px" : "xs"}
+                        fw={active ? 700 : 500}
+                        c={active ? (isDark ? "gray.0" : "dark.7") : (isDark ? "gray.5" : "gray.6")}
+                        ta="center"
+                        style={{ lineHeight: 1.2, whiteSpace: "nowrap" }}
+                      >
+                        {item.label}
+                      </Text>
                     </Group>
                   </UnstyledButton>
                 </Group>

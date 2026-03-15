@@ -6,6 +6,8 @@ import type {
   SocraticQuestionsResponse,
 } from "./types";
 
+const LLM_API_BASE_URL = import.meta.env.VITE_LLM_API_URL || "http://localhost:3001";
+
 async function postJson<T>(url: string, payload: unknown): Promise<T> {
   const response = await fetch(url, {
     method: "POST",
@@ -35,7 +37,7 @@ export function fetchSocraticQuestions(input: {
   maxRounds?: number;
   generationConfig?: LlmGenerationConfig;
 }) {
-  return postJson<SocraticQuestionsResponse>("/api/llm/socratic-questions", input);
+  return postJson<SocraticQuestionsResponse>(`${LLM_API_BASE_URL}/api/llm/socratic-questions`, input);
 }
 
 export function fetchGeneratedCards(input: {
@@ -50,6 +52,6 @@ export function fetchGeneratedCards(input: {
   existingCards?: ExistingCardContext[];
   generationConfig?: LlmGenerationConfig;
 }) {
-  return postJson<GenerateCardsResponse>("/api/llm/generate-cards", input);
+  return postJson<GenerateCardsResponse>(`${LLM_API_BASE_URL}/api/llm/generate-cards`, input);
 }
 

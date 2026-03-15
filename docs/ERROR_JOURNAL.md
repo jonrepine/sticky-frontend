@@ -77,3 +77,10 @@
 **Cause**: Vite dev server host validation rejected the Railway domain while app was running in server mode to support `/api/llm/*`.
 **Fix**: Added `server.allowedHosts` in `vite.config.ts` for `.railway.app`, the current production host, and optional `ALLOWED_HOSTS` overrides.
 **Lesson**: When using Vite server mode in hosted environments, configure an explicit host allowlist alongside runtime start commands.
+**Resolution**: Later extracted LLM logic to standalone API server, eliminating need for Vite server mode in production.
+
+## 2026-03-15 — Mobile app auto-refresh loops caused by Vite HMR in production
+**Symptom**: App refreshed automatically every few seconds on mobile when deployed to Railway.
+**Cause**: Running Vite dev server (`npm run dev`) in production enabled HMR (Hot Module Replacement) websocket, which caused reconnect loops on mobile networks.
+**Fix**: Extracted LLM routes to standalone Express API server, allowing frontend to build as static bundle served via `vite preview`.
+**Lesson**: Never run Vite dev server in production. Always build static bundles and use proper production servers.

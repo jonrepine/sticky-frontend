@@ -143,6 +143,9 @@ function WorkspaceActiveLane({
   children,
 }: WorkspaceActiveLaneProps) {
   const activeDragShiftPx = isDragging ? dragDeltaX * 0.22 : 0;
+  
+  // Simplified animations for mobile performance
+  const shouldAnimate = !prefersReducedMotion && !isCompact;
 
   return (
     <div
@@ -160,33 +163,30 @@ function WorkspaceActiveLane({
           key={activePath}
           custom={slideDirection}
           initial={
-            prefersReducedMotion
-              ? { opacity: 1 }
-              : {
-                  opacity: 0.88,
-                  x: slideDirection >= 0 ? 44 : -44,
-                  scale: isCompact ? 0.985 : 0.992,
+            shouldAnimate
+              ? {
+                  opacity: 0.92,
+                  x: slideDirection >= 0 ? 32 : -32,
                 }
+              : { opacity: 1 }
           }
           animate={{
             opacity: 1,
             x: activeDragShiftPx,
-            scale: 1,
             transition: isDragging
               ? { duration: 0.05, ease: "linear" }
-              : prefersReducedMotion
-                ? { duration: 0 }
-                : { duration: 0.22, ease: [0.22, 1, 0.36, 1] },
+              : shouldAnimate
+                ? { duration: 0.18, ease: [0.22, 1, 0.36, 1] }
+                : { duration: 0 },
           }}
           exit={
-            prefersReducedMotion
-              ? { opacity: 1 }
-              : {
-                  opacity: 0.8,
-                  x: slideDirection >= 0 ? -26 : 26,
-                  scale: 0.985,
-                  transition: { duration: 0.16, ease: [0.4, 0, 1, 1] },
+            shouldAnimate
+              ? {
+                  opacity: 0.85,
+                  x: slideDirection >= 0 ? -20 : 20,
+                  transition: { duration: 0.14, ease: [0.4, 0, 1, 1] },
                 }
+              : { opacity: 1 }
           }
           style={{ width: "100%" }}
         >
@@ -478,7 +478,8 @@ export function WorkspacePage() {
   }, [activeIndex]);
 
   useEffect(() => {
-    if (activeIndex < 0 || prefersReducedMotion || hasRunIdleDriftRef.current) return;
+    // Skip idle drift animation on mobile for better performance
+    if (activeIndex < 0 || prefersReducedMotion || hasRunIdleDriftRef.current || isCompact) return;
     hasRunIdleDriftRef.current = true;
     setIdleDriftPx(IDLE_DRIFT_PX);
     setIsIdleSettling(true);
@@ -494,7 +495,7 @@ export function WorkspacePage() {
       window.cancelAnimationFrame(settleFrame);
       window.clearTimeout(settleTimer);
     };
-  }, [activeIndex, prefersReducedMotion]);
+  }, [activeIndex, prefersReducedMotion, isCompact]);
 
   if (activeIndex < 0) {
     return <Navigate to="/new" replace />;

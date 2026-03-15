@@ -1,12 +1,18 @@
+# Nixpacks configuration for Railway deployment
+# This builds a static frontend bundle and uses vite preview to serve it
+
 [variables]
 NPM_CONFIG_PRODUCTION = "false"
 
 [phases.install]
 cmds = [
-  "rm -rf node_modules/.vite .vite || true",
   "npm install --include=dev"
 ]
 
-[start]
-cmd = "npm run start:railway"
+[phases.build]
+cmds = [
+  "npm run build"
+]
 
+[start]
+cmd = "npm run start"

@@ -10,3 +10,4 @@ dist-ssr
 .env.development.local
 .env.production.local
 .env.test.local
+api-server/.env

@@ -1,0 +1,4 @@
+# Nixpacks configuration for API server deployment on Railway
+
+[start]
+cmd = "npm start"
