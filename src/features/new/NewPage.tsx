@@ -37,7 +37,7 @@ import {
   setSessionTags,
   setSocraticEnabledDefault,
 } from "../../lib/session/newPreferences";
-import { fetchGeneratedCards, fetchSocraticQuestions, getLlmUrl } from "../../lib/llm/client";
+import { fetchGeneratedCards, fetchSocraticQuestions } from "../../lib/llm/client";
 import type { SocraticAnswer, SocraticQuestion } from "../../lib/llm/types";
 import { useGenerationPolicyByCategory } from "../generation/useGenerationPolicyByCategory";
 import { useLearningPreferences } from "../generation/useLearningPreferences";
@@ -246,7 +246,7 @@ export function NewPage({ dueCount = 0, isActive = true }: NewPageProps = {}) {
     let cancelled = false;
     const loadStatus = async () => {
       try {
-        const response = await fetch(getLlmUrl("status"));
+        const response = await fetch("/api/llm/status");
         if (!response.ok) return;
         const data = (await response.json()) as LlmStatus;
         if (!cancelled) setLlmStatus(data);
