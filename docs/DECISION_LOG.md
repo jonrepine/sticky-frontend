@@ -181,3 +181,7 @@
 ## 2026-03-14 — Review rating helper labels prefer rich outcome previews with fallback
 **Decision**: Use `reviewOutcomePreview` display text for rating button helper labels when available, and fallback to existing `nextReviewCard.ratingPreviews` formatting when not.
 **Why**: This provides higher-fidelity pre-submit guidance on capable backends while preserving compatibility with older deployments.
+
+## 2026-03-15 — Railway Vite runtime explicitly allowlists hosted domains
+**Decision**: Configure `vite.config.ts` with `server.allowedHosts` including `.railway.app`, the current Railway hostname, and optional extra hosts via `ALLOWED_HOSTS`.
+**Why**: Running the frontend in Vite server mode on Railway requires host allowlisting; without it, requests are blocked before local LLM proxy routes can execute.

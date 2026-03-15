@@ -71,3 +71,9 @@
 **Cause**: Feature-flag metadata is environment-sensitive (non-production visibility, schema/version differences).
 **Fix**: Added health-query fallback logic and kept note-spec validator feedback non-blocking with graceful failure behavior.
 **Lesson**: Treat capability probes as optional in rolling deployments; never let diagnostics-only metadata block core user actions.
+
+## 2026-03-15 — Railway deployment blocked by Vite host allowlist
+**Symptom**: Frontend returned `Blocked request. This host (...) is not allowed` on Railway.
+**Cause**: Vite dev server host validation rejected the Railway domain while app was running in server mode to support `/api/llm/*`.
+**Fix**: Added `server.allowedHosts` in `vite.config.ts` for `.railway.app`, the current production host, and optional `ALLOWED_HOSTS` overrides.
+**Lesson**: When using Vite server mode in hosted environments, configure an explicit host allowlist alongside runtime start commands.

@@ -1476,6 +1476,21 @@ function llmLocalProxyPlugin(options: LlmProxyOptions): PluginOption {
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
+  const extraAllowedHosts = (env.ALLOWED_HOSTS ?? "")
+    .split(",")
+    .map((host) => host.trim())
+    .filter(Boolean);
+  const allowedHosts = Array.from(
+    new Set([
+      "localhost",
+      "127.0.0.1",
+      "0.0.0.0",
+      ".railway.app",
+      "sticky-frontend-production.up.railway.app",
+      ...(env.RAILWAY_PUBLIC_DOMAIN ? [env.RAILWAY_PUBLIC_DOMAIN] : []),
+      ...extraAllowedHosts,
+    ])
+  );
 
   return {
     plugins: [
@@ -1490,6 +1505,10 @@ export default defineConfig(({ mode }) => {
       alias: {
         "@": path.resolve(__dirname, "./src"),
       },
+    },
+    server: {
+      host: "0.0.0.0",
+      allowedHosts,
     },
     build: {
       rollupOptions: {
