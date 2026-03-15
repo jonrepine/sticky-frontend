@@ -72,15 +72,38 @@ export function AppShell() {
           }}
         >
           <Group h="100%" justify="space-between">
-            <UnstyledButton
-              aria-label="Go to new fact capture"
-              onClick={() => navigate("/new")}
-              style={{ padding: "6px 4px", borderRadius: 10 }}
-            >
-              <Text size="sm" fw={700} c={isDark ? "gray.3" : "dark.8"} style={{ letterSpacing: 0.4 }}>
-                sticky
-              </Text>
-            </UnstyledButton>
+            <Group gap={isCompact ? 8 : 12}>
+              <UnstyledButton
+                aria-label="Go to new fact capture"
+                onClick={() => navigate("/new")}
+                style={{ padding: "6px 4px", borderRadius: 10 }}
+              >
+                <Text size="sm" fw={700} c={isDark ? "gray.3" : "dark.8"} style={{ letterSpacing: 0.4 }}>
+                  sticky
+                </Text>
+              </UnstyledButton>
+
+              <Button
+                aria-label="Open guide"
+                variant="subtle"
+                size="xs"
+                radius="lg"
+                color="gray"
+                leftSection={<IconHelpCircle size={14} />}
+                onClick={() => {
+                  navigate("/how-to-use-sticky");
+                }}
+                styles={{
+                  root: {
+                    fontWeight: 500,
+                    height: 28,
+                    paddingInline: isCompact ? 8 : 10,
+                  },
+                }}
+              >
+                Guide
+              </Button>
+            </Group>
 
             <Group gap={6}>
               <ActionIcon
