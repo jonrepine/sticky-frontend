@@ -202,3 +202,11 @@
 ## 2026-03-15 — Username required at signup, login accepts email or username
 **Decision**: Make username mandatory during registration. Update `SignInInput` to use `emailOrUsername` field (backend detects type via `@` presence). Frontend label: "Email or Username".
 **Why**: Improves user flexibility and matches common auth UX patterns. Usernames provide shorter, more memorable login identifiers.
+
+## 2026-03-15 — Socratic questions are LLM-driven with hardcoded suggestions
+**Decision**: Replace hardcoded Socratic question logic with LLM-generated questions. Current hardcoded questions serve as suggestions to the LLM in the system prompt. Hardcoded guardrails remain: overload detection and round limits. Falls back to hardcoded questions if LLM fails.
+**Why**: LLM can adapt questions to user's actual input (e.g., "Python" → disambiguate snake vs programming). Current questions were good but generic. This makes them context-aware while preserving their quality as suggestions.
+
+## 2026-03-15 — Contrast-pair prompt explicitly handles "word1 vs word2" pattern
+**Decision**: Updated contrast-pair category prompt with explicit instructions: when user provides "term1 vs term2", LLM must (1) identify target vs contrast, (2) explain the key distinction, (3) include this distinction on EVERY card. The distinction is the central teaching point, not optional metadata.
+**Why**: User feedback: contrast-pair cards weren't explicating what distinguishes the terms. The distinction explanation is the whole point of contrast-pair learning.

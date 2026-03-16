@@ -94,11 +94,18 @@ If user attempts very long passage/chapter/body of text, narrow to one short lin
   "contrast-pair": `Category: contrast-pair
 This category is for one target item strengthened by contrast with a confusable alternative.
 
-Generate exactly 3 cards that all resolve to the same target answer:
-1) contrast discrimination
-2) scenario -> target
-3) correction prompt -> target
+IMPORTANT: If user provides input like "word1 vs word2" or "term1 vs term2", you MUST:
+1. Identify which is the target and which is the contrast
+2. Explicitly explain what distinguishes them (the key difference)
+3. Include this distinction explanation in EVERY card (front reminder + back section)
+4. Make the distinction the core teaching point
 
+Generate exactly 3 cards that all resolve to the same target answer:
+1) contrast discrimination (which is which and why)
+2) scenario -> target (with contrast reminder)
+3) correction prompt -> target (with contrast reminder)
+
+The distinction between target and contrast is not optional metadata—it's the central point of the note.
 Contrast item is support, not second equal topic.
 If domain/significance/contrast explanation are selected, include on every card.
 If user attempts many confusable families in one note, narrow to one target-vs-one contrast; reject if overload persists.`,

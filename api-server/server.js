@@ -219,11 +219,18 @@ If user attempts very long passage/chapter/body of text, narrow to one short lin
   'contrast-pair': `Category: contrast-pair
 This category is for one target item strengthened by contrast with a confusable alternative.
 
-Generate exactly 3 cards that all resolve to the same target answer:
-1) contrast discrimination
-2) scenario -> target
-3) correction prompt -> target
+IMPORTANT: If user provides input like "word1 vs word2" or "term1 vs term2", you MUST:
+1. Identify which is the target and which is the contrast
+2. Explicitly explain what distinguishes them (the key difference)
+3. Include this distinction explanation in EVERY card (front reminder + back section)
+4. Make the distinction the core teaching point
 
+Generate exactly 3 cards that all resolve to the same target answer:
+1) contrast discrimination (which is which and why)
+2) scenario -> target (with contrast reminder)
+3) correction prompt -> target (with contrast reminder)
+
+The distinction between target and contrast is not optional metadata—it's the central point of the note.
 Contrast item is support, not second equal topic.
 If domain/significance/contrast explanation are selected, include on every card.
 If user attempts many confusable families in one note, narrow to one target-vs-one contrast; reject if overload persists.`,
@@ -321,7 +328,8 @@ function getSocraticStage(round) {
   return 'disambiguation';
 }
 
-function buildCategoryAwareQuestions(input) {
+// Fallback: hardcoded questions (used if LLM fails or is unavailable)
+function buildCategoryAwareQuestionsFallback(input) {
   const stage = getSocraticStage(input.round);
   if (input.round >= input.maxRounds) {
     return {
@@ -379,6 +387,152 @@ function buildCategoryAwareQuestions(input) {
     reason: limited.length > 0 ? 'Collecting only missing category-critical fields.' : 'Enough context to generate.',
     questions: limited,
   };
+}
+
+function buildSocraticSystemPrompt(categorySlug) {
+  const categoryHints = {
+    'new-word': `Suggested questions to consider:
+- "What does this word mean in simple terms?" (options: Short definition, Usage meaning, Still unsure)
+- "Where did you encounter this?" (to capture source/context)`,
+    'new-word-plus': `Suggested questions to consider:
+- "What does this word/phrase mean?"
+- "Where did you encounter this?" (source/context is important for this category)`,
+    'technical-definition': `Suggested questions to consider:
+- "What field/domain is this from?"
+- "What distinguishes this from similar terms?"`,
+    'contrast-pair': `Suggested questions to consider:
+- "Which term is the main target you want to remember?"
+- "What's the key difference between these two terms?"`,
+    'fact': `Suggested questions to consider:
+- "Where did you learn this?" (source/context)
+- "Why does this matter?" (significance)`,
+    'formula-rule': `Suggested questions to consider:
+- "What domain/field is this formula from?"
+- "When would you use this formula?"`,
+  };
+
+  const hints = categoryHints[categorySlug] || categoryHints['fact'];
+
+  return `You are a Socratic questioner for a flashcard app. Your job is to ask the user SHORT, TARGETED questions to clarify what they want to remember.
+
+CRITICAL RULES:
+1. Ask only for MISSING information that affects card quality
+2. Keep questions under 15 words
+3. Provide 2-4 multiple-choice options when helpful
+4. Never ask questions the user already answered in their input or previous QA context
+5. Generate 1-3 questions maximum
+6. If the input is already clear and complete, return needsFollowUp: false
+
+CONTEXT-AWARE QUESTIONING:
+- If input is vague (e.g., single word with multiple meanings), ask for disambiguation
+- If input is a "term1 vs term2" pattern, ask which is the target and what distinguishes them
+- If source/context would improve recall, ask "Where did you encounter this?"
+- If exactness matters (definitions, formulas), confirm precision needs
+
+${hints}
+
+Return JSON only:
+{
+  "needsFollowUp": boolean,
+  "reason": "string (1 sentence explaining why follow-up is needed or why not)",
+  "questions": [
+    {
+      "id": "string (e.g., 'meaning-check', 'source-check', 'target-check')",
+      "text": "string (the question, under 15 words)",
+      "options": ["option1", "option2", "option3"]  // optional array
+    }
+  ]
+}
+
+If no questions needed, return: { "needsFollowUp": false, "reason": "Input is clear and complete", "questions": [] }`;
+}
+
+async function buildCategoryAwareQuestionsLLM(input) {
+  const stage = getSocraticStage(input.round);
+  
+  // Hardcoded guardrails
+  if (input.round >= input.maxRounds) {
+    return {
+      round: input.round,
+      stage,
+      needsFollowUp: false,
+      reason: 'Reached configured Socratic round cap.',
+      questions: [],
+    };
+  }
+
+  const overloaded = isLikelyOverloadedInput(input.inputText);
+  if (overloaded && !hasNarrowingSignal(input.qaContext)) {
+    return {
+      round: input.round,
+      stage: 'context',
+      needsFollowUp: input.round < input.maxRounds,
+      reason: 'Input appears overloaded; collecting one atomic target first.',
+      questions: [
+        {
+          id: 'atomicity-check',
+          text: 'What single thing should this note help you recall later?',
+          options: ['One term', 'One proposition', 'One formula/rule', 'One short sequence'],
+        },
+      ],
+    };
+  }
+
+  // LLM-driven question generation
+  try {
+    const systemPrompt = buildSocraticSystemPrompt(input.categorySlug);
+    const userPrompt = `Input: ${input.inputText.trim()}
+Category: ${input.categoryName} (${input.categorySlug})
+Round: ${input.round} of ${input.maxRounds}
+Previous QA Context: ${JSON.stringify(input.qaContext)}
+
+Based on the input and category, generate 1-3 short Socratic questions to clarify what the user wants to remember. Focus on missing context that would improve card quality.
+
+If the input is already clear and complete, return needsFollowUp: false.`;
+
+    const parsed = await openAiJsonCall({
+      apiKey: OPENAI_API_KEY,
+      model: OPENAI_MODEL,
+      temperature: 0.3,
+      systemPrompt,
+      userPrompt,
+    });
+
+    // Validate response structure
+    if (typeof parsed.needsFollowUp !== 'boolean') {
+      throw new Error('Invalid LLM response: missing needsFollowUp');
+    }
+
+    const questions = Array.isArray(parsed.questions) ? parsed.questions : [];
+    const validQuestions = questions
+      .filter(q => q && typeof q.text === 'string' && q.text.trim())
+      .map(q => ({
+        id: String(q.id || 'llm-question').trim(),
+        text: String(q.text).trim(),
+        options: Array.isArray(q.options) ? q.options.map(opt => String(opt).trim()).filter(Boolean) : undefined,
+      }))
+      .slice(0, 3);
+
+    return {
+      round: input.round,
+      stage,
+      needsFollowUp: parsed.needsFollowUp && validQuestions.length > 0 && input.round < input.maxRounds,
+      reason: String(parsed.reason || 'LLM-generated questions').trim(),
+      questions: validQuestions,
+    };
+  } catch (err) {
+    console.error('LLM Socratic generation failed, using fallback:', err);
+    // Fall back to hardcoded questions
+    return buildCategoryAwareQuestionsFallback(input);
+  }
+}
+
+// Main entry point - tries LLM first, falls back to hardcoded
+async function buildCategoryAwareQuestions(input) {
+  if (!hasApiKey) {
+    return buildCategoryAwareQuestionsFallback(input);
+  }
+  return buildCategoryAwareQuestionsLLM(input);
 }
 
 function inferCoreAnswer(inputText, categorySlug, qaContext) {
@@ -583,7 +737,7 @@ app.post('/api/llm/socratic-questions', async (req, res) => {
     const roundVal = Number.isFinite(Number(round)) ? Math.max(1, Math.floor(Number(round))) : 1;
     const maxRoundsVal = Number.isFinite(Number(maxRounds)) ? Math.max(1, Math.min(3, Math.floor(Number(maxRounds)))) : config.maxSocraticRounds;
 
-    const socraticResponse = buildCategoryAwareQuestions({
+    const socraticResponse = await buildCategoryAwareQuestions({
       inputText: inputText.trim(),
       categoryName: categoryName || 'General',
       categorySlug: categorySlug || 'general',
